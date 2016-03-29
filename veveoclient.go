@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 
 	"gopkg.in/readline.v1"
@@ -12,10 +13,22 @@ import (
 const (
 	xpid    = "pkg00@PASSPORT3496.Rovi"
 	custid  = "passport"
-	rpr     = 10
-	ectJson = 5
-	baseUrl = "http://roviapi.veveo.net/search?XPID=%s&custid=%s&RPR=%d&ECT=%d&W=%s"
+	rpr     = "10"
+	ectJson = "5"
+	baseUrl = "http://roviapi.veveo.net/search"
 )
+
+var params map[string]string
+
+func init() {
+	params = make(map[string]string)
+
+	params["XPID"] = xpid
+	params["custid"] = custid
+	params["RPR"] = rpr
+	params["ECT"] = ectJson
+	//map["W"] = ""
+}
 
 func prompt(name, historyFileName string) string {
 	prmpt := fmt.Sprintf("%v: ", name)
@@ -44,8 +57,23 @@ func searchTerm() (searchString string) {
 }
 
 func getUrl(searchTerm string) string {
-	url := fmt.Sprintf(baseUrl, xpid, custid, rpr, ectJson, searchTerm)
-	return url
+	//url := fmt.Sprintf(baseUrl, xpid, custid, rpr, ectJson, searchTerm)
+	var Url *url.URL
+	Url, err := url.Parse(baseUrl)
+
+	if err != nil {
+		panic("Wrong base URL: " + baseUrl)
+	}
+
+	parameters := url.Values{}
+	for k, v := range params {
+		parameters.Add(k, v)
+	}
+
+	parameters.Add("W", searchTerm)
+	Url.RawQuery = parameters.Encode()
+
+	return Url.String()
 }
 
 func main() {
@@ -68,6 +96,8 @@ func main() {
 				fmt.Printf("%s", err)
 				os.Exit(1)
 			}
+			fmt.Println("--------------------begin---------------------------")
+			fmt.Println("RQ:" + url)
 			fmt.Println("--------------------begin---------------------------")
 			fmt.Printf("%s\n", string(contents))
 			fmt.Println("---------------------end----------------------------")
